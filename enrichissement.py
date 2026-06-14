@@ -14,7 +14,9 @@ import os
 import json
 import time
 import sys
+import threading
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -213,11 +215,18 @@ if __name__ == "__main__":
         help="'alertes' = enrichit seulement les CVE des alertes (rapide). "
              "'tout' = enrichit toutes les CVE (long)."
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Nombre de threads parallèles pour MITRE (défaut: 1, recommandé: 5)"
+    )
     args = parser.parse_args()
 
     print("=" * 55)
     print("  ENRICHISSEMENT DES CVE")
-    print(f"  Mode : {args.mode.upper()}")
+    print(f"  Mode    : {args.mode.upper()}")
+    print(f"  Workers : {args.workers}")
     print("=" * 55)
 
     # Chargement des bulletins
@@ -255,22 +264,43 @@ if __name__ == "__main__":
 
     print(f"  → {len(scores_epss)} scores EPSS récupérés")
 
-    # ── MITRE CVE par CVE ──
-    print(f"\n[2/2] Récupération des données MITRE ({DELAI_MITRE}s/CVE)...")
+    # ── MITRE — mode parallèle ou séquentiel ──
     enrichissement = {}
+    total = len(cves_uniques)
 
-    for i, cve_id in enumerate(cves_uniques, start=1):
-        data_mitre = recuperer_mitre(cve_id)
-        infos = parser_mitre(data_mitre)
-        infos["epss"] = scores_epss.get(cve_id)
-        enrichissement[cve_id] = infos
+    if args.workers > 1:
+        print(f"\n[2/2] MITRE en parallèle ({args.workers} workers)...")
+        verrou = threading.Lock()
+        compteur = [0]
 
-        if i % 25 == 0 or i == len(cves_uniques):
-            en_cache = sum(
-                1 for c in cves_uniques[:i]
-                if os.path.exists(os.path.join(DOSSIER_MITRE, c + ".json"))
-            )
-            print(f"  {i}/{len(cves_uniques)} — {en_cache} depuis cache...")
+        def traiter_cve(cve_id):
+            data_mitre = recuperer_mitre(cve_id)
+            infos = parser_mitre(data_mitre)
+            infos["epss"] = scores_epss.get(cve_id)
+            with verrou:
+                enrichissement[cve_id] = infos
+                compteur[0] += 1
+                n = compteur[0]
+                if n % 500 == 0 or n == total:
+                    print(f"  {n}/{total} CVE traitées...", flush=True)
+
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            list(executor.map(traiter_cve, cves_uniques))
+
+    else:
+        print(f"\n[2/2] Récupération des données MITRE ({DELAI_MITRE}s/CVE)...")
+        for i, cve_id in enumerate(cves_uniques, start=1):
+            data_mitre = recuperer_mitre(cve_id)
+            infos = parser_mitre(data_mitre)
+            infos["epss"] = scores_epss.get(cve_id)
+            enrichissement[cve_id] = infos
+
+            if i % 25 == 0 or i == total:
+                en_cache = sum(
+                    1 for c in cves_uniques[:i]
+                    if os.path.exists(os.path.join(DOSSIER_MITRE, c + ".json"))
+                )
+                print(f"  {i}/{total} — {en_cache} depuis cache...")
 
     # ── Sauvegarde ──
     sortie = "cves_enrichies.json"

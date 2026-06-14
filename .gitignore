@@ -12,6 +12,11 @@ venv/
 mitre/
 first/
 
+# Fichiers générés (trop volumineux pour GitHub — relancer le pipeline)
+bulletins.csv
+cves_enrichies.json
+enrichissement_log.txt
+
 # Fichiers systèmes
 .DS_Store
 Thumbs.db

@@ -11,7 +11,7 @@ publiés par le CERT-FR (ANSSI). Génère des alertes personnalisées pour les p
 - Identification des CVE mentionnées dans chaque bulletin
 - Enrichissement via les API MITRE (CVSS, CWE, produits) et FIRST (EPSS)
 - Consolidation dans un DataFrame pandas exporté en CSV
-- Analyse et visualisation (8 graphiques : CVSS, EPSS, CWE, éditeurs, heatmap...)
+- Analyse et visualisation (9 graphiques : distribution CVSS/EPSS, scatter CVSS vs EPSS, top CWE, top éditeurs, évolution temporelle)
 - Machine Learning : clustering KMeans + classification Random Forest
 - Génération d'alertes email personnalisées par produit surveillé
 

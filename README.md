@@ -1,4 +1,4 @@
-# Analyse des Bulletins ANSSI — Enrichissement CVE
+# Analyse des Bulletins ANSSI - Enrichissement CVE
 
 Outil Python d'extraction, d'enrichissement et d'analyse des bulletins de sécurité
 publiés par le CERT-FR (ANSSI). Génère des alertes personnalisées pour les produits affectés.
@@ -21,22 +21,23 @@ publiés par le CERT-FR (ANSSI). Génère des alertes personnalisées pour les p
 
 ```
 .
-├── extraction.py        # Étapes 1 & 2 — lecture bulletins + extraction CVE
-├── enrichissement.py    # Étape 3  — enrichissement via API MITRE et FIRST
-├── consolidation.py     # Étape 4  — construction DataFrame + export CSV
-├── alertes.py           # Étape 7  — génération alertes et emails
+├── extraction.py        # Étapes 1 & 2 - lecture bulletins + extraction CVE
+├── enrichissement.py    # Étape 3  - enrichissement via API MITRE et FIRST
+├── consolidation.py     # Étape 4  - construction DataFrame + export CSV
+├── alertes.py           # Étape 7  - génération alertes et emails
 ├── creer_notebook.py    # Génère analyse.ipynb
-├── analyse.ipynb        # Étapes 5 & 6 — visualisations + ML
+├── analyse.ipynb        # Étapes 5 & 6 - visualisations + ML
 ├── analyse.html         # Export HTML du notebook (livrable)
 ├── bulletins_bruts.json # Bulletins extraits (généré par extraction.py)
+├── bulletins.zip        # Données consolidées compressées (126 124 lignes, 37 287 CVE)
 └── data/
     └── data/
         ├── alertes/     # 78 bulletins d'alertes CERTFR (JSON)
         └── Avis/        # 4025 avis de sécurité CERTFR (JSON)
 ```
 
-> **Note :** `bulletins.csv` (186 MB) et `cves_enrichies.json` (50 MB) sont générés
-> par le pipeline et exclus du dépôt Git. Relancer les scripts pour les reproduire.
+> **Note :** `bulletins.csv` est disponible décompressé dans `bulletins.zip` (42.9 MB).
+> `cves_enrichies.json` (50 MB) est généré par `enrichissement.py` et exclu du dépôt.
 
 ---
 
@@ -85,8 +86,8 @@ Les bulletins ANSSI sont fournis en local dans `data/data/` :
 
 | Dossier | Contenu | Période |
 |---------|---------|---------|
-| `alertes/` | 78 alertes CERTFR | 2021 – 2025 |
-| `Avis/` | 4025 avis CERTFR | 2023 – 2025 |
+| `alertes/` | 78 alertes CERTFR | 2021 - 2025 |
+| `Avis/` | 4025 avis CERTFR | 2023 - 2025 |
 
 Les données d'enrichissement (MITRE et EPSS) sont téléchargées à la demande
 et mises en cache localement dans `mitre/` et `first/` (non versionnés).
@@ -127,4 +128,4 @@ Bulletins locaux (JSON)
 - Le cache local (`mitre/`, `first/`) évite de retélécharger les données déjà récupérées.
 - Les fichiers de cache et données générées sont exclus du dépôt Git (voir `.gitignore`).
 - L'envoi d'email nécessite un mot de passe d'application Gmail
-  (à ne jamais stocker dans le code — utiliser des variables d'environnement).
+  (à ne jamais stocker dans le code - utiliser des variables d'environnement).

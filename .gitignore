@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environnement virtuel
+.env
+venv/
+.venv/
+
+# Cache APIs (généré automatiquement par enrichissement.py)
+mitre/
+first/
+
+# Fichiers systèmes
+.DS_Store
+Thumbs.db
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Claude Code (outil de développement local)
+.claude/

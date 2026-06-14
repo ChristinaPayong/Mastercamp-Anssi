@@ -28,12 +28,15 @@ publiés par le CERT-FR (ANSSI). Génère des alertes personnalisées pour les p
 ├── creer_notebook.py    # Génère analyse.ipynb
 ├── analyse.ipynb        # Étapes 5 & 6 — visualisations + ML
 ├── analyse.html         # Export HTML du notebook (livrable)
-├── bulletins.csv        # Données consolidées (126 000+ lignes)
+├── bulletins_bruts.json # Bulletins extraits (généré par extraction.py)
 └── data/
     └── data/
         ├── alertes/     # 78 bulletins d'alertes CERTFR (JSON)
         └── Avis/        # 4025 avis de sécurité CERTFR (JSON)
 ```
+
+> **Note :** `bulletins.csv` (186 MB) et `cves_enrichies.json` (50 MB) sont générés
+> par le pipeline et exclus du dépôt Git. Relancer les scripts pour les reproduire.
 
 ---
 
@@ -56,8 +59,8 @@ python extraction.py
 # 2. Enrichir les CVE (mode rapide : alertes seulement)
 python enrichissement.py --mode alertes
 
-# 2b. Enrichir toutes les CVE (long — à lancer la nuit)
-python enrichissement.py --mode tout
+# 2b. Enrichir toutes les CVE en parallèle (recommandé)
+python enrichissement.py --mode tout --workers 5
 
 # 3. Construire le DataFrame et exporter le CSV
 python consolidation.py
@@ -118,9 +121,10 @@ Bulletins locaux (JSON)
 
 ## Remarques techniques
 
-- Le script `enrichissement.py` inclut un délai de 0.5s entre chaque requête MITRE
-  pour respecter les serveurs (rate limiting).
+- Le script `enrichissement.py` supporte le mode parallèle (`--workers N`) pour
+  accélérer l'enrichissement MITRE (5 workers ≈ 3h pour 37 000 CVE).
+- Un délai de 0.5s entre chaque requête respecte le rate limiting de l'API MITRE.
 - Le cache local (`mitre/`, `first/`) évite de retélécharger les données déjà récupérées.
-- Les fichiers de cache sont exclus du dépôt Git (voir `.gitignore`).
+- Les fichiers de cache et données générées sont exclus du dépôt Git (voir `.gitignore`).
 - L'envoi d'email nécessite un mot de passe d'application Gmail
   (à ne jamais stocker dans le code — utiliser des variables d'environnement).

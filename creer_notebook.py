@@ -243,73 +243,6 @@ plt.savefig("viz_temporel.png", bbox_inches="tight")
 plt.show()
 """))
 
-# -- VIZ 7 : Boxplot EPSS par sévérité --
-cells.append(nbf.v4.new_markdown_cell("""\
-### 3.7 EPSS par niveau de sévérité CVSS
-
-Contrairement à un boxplot CVSS/sévérité (qui serait circulaire — la sévérité
-*est* définie par le CVSS), celui-ci pose une vraie question analytique :
-**est-ce que les vulnérabilités les plus graves techniquement sont aussi
-les plus activement exploitées ?** Ce n'est pas garanti.
-"""))
-cells.append(nbf.v4.new_code_cell("""\
-ordre   = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
-palette = ["#2ecc71", "#f39c12", "#e67e22", "#e74c3c"]
-
-df_box = df_enrichi.dropna(subset=["base_severity", "epss"])
-df_box = df_box[df_box["base_severity"].isin(ordre)]
-
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.boxplot(data=df_box, x="base_severity", y="epss",
-            order=ordre, palette=palette, ax=ax)
-ax.set_title("Distribution du score EPSS par niveau de sévérité CVSS")
-ax.set_xlabel("Sévérité (définie par CVSS)")
-ax.set_ylabel("Score EPSS (probabilité d'exploitation)")
-ax.axhline(0.5, color="gray", linestyle="--", alpha=0.6, label="Seuil EPSS = 0.5")
-ax.legend()
-plt.tight_layout()
-plt.savefig("viz_epss_severite.png", bbox_inches="tight")
-plt.show()
-
-# Interprétation
-print("Médiane EPSS par sévérité :")
-print(df_box.groupby("base_severity")["epss"].median().reindex(ordre).round(3).to_string())
-"""))
-
-# -- VIZ 8 : Top risques mentionnés dans les bulletins --
-cells.append(nbf.v4.new_markdown_cell("""\
-### 3.8 Types de risques mentionnés dans les bulletins ANSSI
-
-La colonne `risques` du bulletin ANSSI décrit les conséquences concrètes
-d'une exploitation : exécution de code, élévation de privilèges, etc.
-C'est une information qualitative directement rédigée par l'ANSSI.
-"""))
-cells.append(nbf.v4.new_code_cell("""\
-# La colonne risques contient des entrées séparées par " | "
-# On les éclate et on compte chaque type
-df_risques = df.dropna(subset=["risques"]).copy()
-df_risques = df_risques[df_risques["risques"] != ""]
-
-tous_risques = (
-    df_risques["risques"]
-    .str.split(" | ")
-    .explode()
-    .str.strip()
-    .str.lower()
-)
-top_risques = tous_risques[tous_risques != ""].value_counts().head(10)
-
-fig, ax = plt.subplots(figsize=(12, 5))
-bars = ax.barh(top_risques.index[::-1], top_risques.values[::-1], color="#8e44ad")
-ax.set_title("Top 10 des risques mentionnés dans les bulletins ANSSI")
-ax.set_xlabel("Nombre de bulletins")
-for bar, val in zip(bars, top_risques.values[::-1]):
-    ax.text(bar.get_width() + 5, bar.get_y() + bar.get_height() / 2,
-            str(val), va="center")
-plt.tight_layout()
-plt.savefig("viz_risques.png", bbox_inches="tight")
-plt.show()
-"""))
 
 # ══════════════════════════════════════════════════════
 # SECTION 4 — MACHINE LEARNING
@@ -466,44 +399,6 @@ plt.savefig("viz_confusion.png", bbox_inches="tight")
 plt.show()
 """))
 
-cells.append(nbf.v4.new_markdown_cell("""\
-### 4.3 Courbe Précision / Rappel
-
-La matrice de confusion donne un résultat à un seuil fixe (0.5).
-La courbe Précision/Rappel montre comment le modèle se comporte
-sur **tous les seuils possibles** — c'est une évaluation plus complète.
-
-- **Précision** : parmi les CVE que le modèle dit CRITICAL, combien le sont vraiment ?
-- **Rappel** : parmi les vraies CRITICAL, combien le modèle en a-t-il trouvé ?
-- **AUC-PR** : aire sous la courbe — plus proche de 1, meilleur le modèle.
-"""))
-cells.append(nbf.v4.new_code_cell("""\
-from sklearn.metrics import precision_recall_curve, average_precision_score
-
-# Probabilités prédites (et non la classe 0/1)
-# predict_proba retourne [proba_classe_0, proba_classe_1] pour chaque exemple
-y_scores = rf.predict_proba(X_test)[:, 1]
-
-precision_vals, recall_vals, seuils = precision_recall_curve(y_test, y_scores)
-auc_pr = average_precision_score(y_test, y_scores)
-
-fig, ax = plt.subplots(figsize=(8, 5))
-ax.plot(recall_vals, precision_vals, color="#e74c3c", linewidth=2,
-        label=f"Random Forest (AUC-PR = {auc_pr:.3f})")
-ax.axhline(y_test.mean(), color="gray", linestyle="--",
-           label=f"Ligne de base ({y_test.mean():.2f})")
-ax.set_title("Courbe Précision / Rappel — Random Forest")
-ax.set_xlabel("Rappel (Recall) — proportion de CRITICAL trouvées")
-ax.set_ylabel("Précision — fiabilité des prédictions CRITICAL")
-ax.legend()
-ax.set_xlim([0, 1])
-ax.set_ylim([0, 1.05])
-plt.tight_layout()
-plt.savefig("viz_precision_rappel.png", bbox_inches="tight")
-plt.show()
-
-print(f"AUC-PR : {auc_pr:.3f}  (1.0 = parfait, {y_test.mean():.2f} = aléatoire)")
-"""))
 
 # ══════════════════════════════════════════════════════
 # SECTION 5 — CONCLUSION
